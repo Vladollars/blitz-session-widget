@@ -1,0 +1,168 @@
+* { box-sizing: border-box; }
+
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: transparent;
+  color: #f2f2f2;
+}
+
+body { overflow: hidden; }
+
+/* ---------- summary ---------- */
+
+.summary-view {
+  position: relative;
+  width: 100%;
+  min-width: 220px;
+  padding-right: 30px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(60px, 1fr));
+  gap: 4px;
+}
+
+.stat {
+  height: 48px;
+  padding: 5px 3px 3px;
+  text-align: center;
+  border-radius: 5px;
+  background: rgba(24, 28, 35, 0.94);
+}
+
+.stat strong {
+  display: block;
+  font-size: 19px;
+  line-height: 21px;
+  white-space: nowrap;
+}
+
+.stat span {
+  display: block;
+  margin-top: 4px;
+  font-size: 8px;
+  line-height: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  white-space: nowrap;
+}
+
+.reset {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(24, 28, 35, 0.94);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.reset:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* battle is deliberately only one thin row */
+body[data-view="battle"] .summary-view {
+  padding-right: 0;
+}
+body[data-view="battle"] .reset {
+  display: none;
+}
+body[data-view="battle"] .summary {
+  gap: 3px;
+}
+body[data-view="battle"] .stat {
+  height: 24px;
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+body[data-view="battle"] .stat strong {
+  display: inline;
+  font-size: 13px;
+  line-height: 22px;
+}
+body[data-view="battle"] .stat span {
+  display: inline;
+  margin: 0 0 0 3px;
+  font-size: 7px;
+  line-height: 22px;
+}
+
+/* ---------- tanks ---------- */
+
+.tanks-view {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+
+.tank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tank {
+  display: grid;
+  grid-template-columns: minmax(105px, 1fr) 54px 66px 72px;
+  gap: 5px;
+  align-items: center;
+  min-height: 48px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  background: rgba(24, 28, 35, 0.94);
+}
+
+.tank-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cell { text-align: right; }
+
+.cell strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.cell span {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.empty {
+  padding: 10px 8px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 11px;
+}
+
+.error-line {
+  display: none;
+  margin-top: 3px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: rgba(110, 25, 25, 0.85);
+  color: #ffd0d0;
+  font-size: 9px;
+}
+
+.error-line.visible { display: block; }
