@@ -1,21 +1,15 @@
 * { box-sizing: border-box; }
 
-:root {
-  color-scheme: dark;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 html, body {
   margin: 0;
   width: 100%;
   min-height: 100%;
   background: transparent;
   color: #f2f2f2;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body { overflow: hidden; }
-
-/* ---------- summary ---------- */
 
 .summary-view {
   position: relative;
@@ -56,8 +50,8 @@ body { overflow: hidden; }
 
 .reset {
   position: absolute;
-  top: 0;
   right: 0;
+  top: 0;
   width: 26px;
   height: 26px;
   border: 0;
@@ -65,46 +59,39 @@ body { overflow: hidden; }
   background: rgba(24, 28, 35, 0.94);
   color: rgba(255, 255, 255, 0.8);
   font-size: 15px;
-  cursor: pointer;
 }
 
-.reset:hover { background: rgba(255, 255, 255, 0.14); }
-
-/* battle is deliberately only one thin row */
-body[data-view="battle"] .summary-view {
+body.battle .summary-view {
   padding-right: 0;
 }
-body[data-view="battle"] .reset {
+
+body.battle .reset {
   display: none;
 }
-body[data-view="battle"] .summary {
-  gap: 3px;
-}
-body[data-view="battle"] .stat {
+
+body.battle .stat {
   height: 24px;
   padding: 1px 3px;
-  border-radius: 3px;
 }
-body[data-view="battle"] .stat strong {
+
+body.battle .stat strong {
   display: inline;
   font-size: 13px;
   line-height: 22px;
 }
-body[data-view="battle"] .stat span {
+
+body.battle .stat span {
   display: inline;
-  margin: 0 0 0 3px;
+  margin-left: 3px;
   font-size: 7px;
   line-height: 22px;
 }
-
-/* ---------- tanks ---------- */
 
 .tanks-view {
   width: 100%;
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
 }
 
 .tank-list {
@@ -129,15 +116,16 @@ body[data-view="battle"] .stat span {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: bold;
 }
 
-.cell { text-align: right; }
+.cell {
+  text-align: right;
+}
 
 .cell strong {
   display: block;
   font-size: 13px;
-  line-height: 1.05;
   white-space: nowrap;
 }
 
@@ -145,7 +133,6 @@ body[data-view="battle"] .stat span {
   display: block;
   margin-top: 3px;
   font-size: 8px;
-  line-height: 1;
   color: rgba(255, 255, 255, 0.48);
 }
 
@@ -159,10 +146,11 @@ body[data-view="battle"] .stat span {
   display: none;
   margin-top: 3px;
   padding: 3px 5px;
-  border-radius: 4px;
-  background: rgba(110, 25, 25, 0.85);
+  background: rgba(110, 25, 25, 0.9);
   color: #ffd0d0;
   font-size: 9px;
 }
 
-.error-line.visible { display: block; }
+.error-line.visible {
+  display: block;
+}
