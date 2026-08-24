@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blitz Session</title>
+<style>
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: transparent;
+  color: #f2f2f2;
+  font-family: Arial, Helvetica, sans-serif;
+}
+body { overflow: hidden; }
+
+.summary-view {
+  position: relative;
+  width: 100%;
+  min-width: 220px;
+  padding-right: 30px;
+}
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(60px, 1fr));
+  gap: 4px;
+}
+.stat {
+  height: 48px;
+  padding: 5px 3px 3px;
+  text-align: center;
+  border-radius: 5px;
+  background: rgba(24, 28, 35, 0.94);
+}
+.stat strong {
+  display: block;
+  font-size: 19px;
+  line-height: 21px;
+  white-space: nowrap;
+}
+.stat span {
+  display: block;
+  margin-top: 4px;
+  font-size: 8px;
+  line-height: 10px;
+  color: rgba(255,255,255,.58);
+  white-space: nowrap;
+}
+.reset {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(24,28,35,.94);
+  color: rgba(255,255,255,.8);
+  font-size: 15px;
+}
+body.battle .summary-view { padding-right: 0; }
+body.battle .reset { display: none; }
+body.battle .summary { gap: 3px; }
+body.battle .stat {
+  height: 24px;
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+body.battle .stat strong {
+  display: inline;
+  font-size: 13px;
+  line-height: 22px;
+}
+body.battle .stat span {
+  display: inline;
+  margin: 0 0 0 3px;
+  font-size: 7px;
+  line-height: 22px;
+}
+
+.tanks-view {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.tank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tank {
+  display: grid;
+  grid-template-columns: minmax(105px, 1fr) 54px 66px 72px;
+  gap: 5px;
+  align-items: center;
+  min-height: 48px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  background: rgba(24,28,35,.94);
+}
+.tank-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: bold;
+}
+.cell { text-align: right; }
+.cell strong {
+  display: block;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.cell span {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  color: rgba(255,255,255,.48);
+}
+.empty {
+  padding: 10px 8px;
+  color: rgba(255,255,255,.52);
+  font-size: 11px;
+}
+.error-line {
+  display: none;
+  margin-top: 3px;
+  padding: 3px 5px;
+  background: rgba(110,25,25,.9);
+  color: #ffd0d0;
+  font-size: 9px;
+}
+.error-line.visible { display: block; }
+
+</style>
+</head>
+<body>
+
+  <main class="tanks-view">
+    <div id="tankList" class="tank-list">
+      <div class="empty">Пока нет боёв после точки отсчёта.</div>
+    </div>
+    <div id="errorLine" class="error-line"></div>
+  </main>
+
+<script>
+
+(function () {
+  var DEFAULT_APPLICATION_ID = "153a89caee08c947220e21a5a91f13bb";
+  var DEFAULT_ACCOUNT_ID = "573439188";
+  var POLL_MS = 10000;
+
+  function param(name) {
+    var q = window.location.search.substring(1).split("&");
+    var i, pair;
+    for (i = 0; i < q.length; i++) {
+      pair = q[i].split("=");
+      if (decodeURIComponent(pair[0] || "") === name) {
+        return decodeURIComponent((pair.slice(1).join("=") || "").replace(/\+/g, " "));
+      }
+    }
+    return null;
+  }
+
+  var uiMode = "tanks";
+  var viewMode = (param("view") || "hangar").toLowerCase();
+  if (viewMode === "battle") {
+    document.body.className = "battle";
+  }
+
+  var paramAccountId = param("account_id");
+  var paramRealm = param("realm");
+
+  try {
+    if (paramAccountId) localStorage.setItem("blitz-last-account-id", paramAccountId);
+    if (paramRealm) localStorage.setItem("blitz-last-realm", paramRealm.toLowerCase());
+  } catch (e) {}
+
+  var accountId = paramAccountId;
+  var realm = paramRealm;
+
+  try {
+    if (!accountId) accountId = localStorage.getItem("blitz-last-account-id");
+    if (!realm) realm = localStorage.getItem("blitz-last-realm");
+  } catch (e2) {}
+
+  accountId = accountId || DEFAULT_ACCOUNT_ID;
+  realm = (realm || "eu").toLowerCase();
+
+  var applicationId = param("application_id") || DEFAULT_APPLICATION_ID;
+
+  var hosts = {
+    eu: "https://api.wotblitz.eu",
+    ru: "https://api.wotblitz.ru",
+    na: "https://api.wotblitz.com",
+    asia: "https://api.wotblitz.asia"
+  };
+
+  var apiHost = hosts[realm] || hosts.eu;
+  var baselineKey = "blitz-session-baseline:" + realm + ":" + accountId;
+  var namesKey = "blitz-session-tank-names:v5";
+
+  var errorLine = document.getElementById("errorLine");
+  var busy = false;
+
+  function showError(message) {
+    if (!errorLine) return;
+    errorLine.innerHTML = "";
+    errorLine.appendChild(document.createTextNode(message));
+    errorLine.className = "error-line visible";
+  }
+
+  function clearError() {
+    if (!errorLine) return;
+    errorLine.innerHTML = "";
+    errorLine.className = "error-line";
+  }
+
+  function apiUrl(path, args) {
+    var url = apiHost + path + "?application_id=" + encodeURIComponent(applicationId);
+    var k;
+    for (k in args) {
+      if (args.hasOwnProperty(k) && args[k] !== null && args[k] !== "") {
+        url += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(args[k]);
+      }
+    }
+    url += "&_ts=" + new Date().getTime();
+    return url;
+  }
+
+  function requestJson(url, done) {
+    var xhr;
+    try {
+      xhr = new XMLHttpRequest();
+    } catch (e) {
+      done("XMLHttpRequest unavailable", null);
+      return;
+    }
+
+    xhr.onreadystatechange = function () {
+      var data;
+      if (xhr.readyState !== 4) return;
+
+      if (xhr.status !== 200 && xhr.status !== 0) {
+        done("HTTP " + xhr.status, null);
+        return;
+      }
+
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch (e) {
+        done("JSON parse error", null);
+        return;
+      }
+
+      if (!data || data.status !== "ok") {
+        done("WG API error", null);
+        return;
+      }
+
+      done(null, data);
+    };
+
+    xhr.onerror = function () {
+      done("XHR network/CORS error", null);
+    };
+
+    try {
+      xhr.open("GET", url, true);
+      xhr.setRequestHeader("Cache-Control", "no-cache");
+      xhr.send(null);
+    } catch (e2) {
+      done("XHR send error: " + e2.message, null);
+    }
+  }
+
+  function loadAccount(done) {
+    requestJson(
+      apiUrl("/wotb/account/info/", {
+        account_id: accountId,
+        fields: "nickname,statistics.all.battles,statistics.all.wins,statistics.all.damage_dealt"
+      }),
+      function (err, json) {
+        var a, all;
+        if (err) { done(err, null); return; }
+        a = json.data ? json.data[accountId] : null;
+        if (!a) { done("account not found", null); return; }
+        all = (a.statistics && a.statistics.all) ? a.statistics.all : {};
+        done(null, {
+          nickname: a.nickname || accountId,
+          battles: Number(all.battles || 0),
+          wins: Number(all.wins || 0),
+          damage: Number(all.damage_dealt || 0)
+        });
+      }
+    );
+  }
+
+  function loadTanks(done) {
+    requestJson(
+      apiUrl("/wotb/tanks/stats/", {
+        account_id: accountId,
+        fields: "tank_id,all.battles,all.wins,all.damage_dealt"
+      }),
+      function (err, json) {
+        var rows, result, i, row, all;
+        if (err) { done(err, null); return; }
+        rows = (json.data && json.data[accountId]) ? json.data[accountId] : [];
+        result = {};
+
+        for (i = 0; i < rows.length; i++) {
+          row = rows[i];
+          all = row.all || {};
+          result[String(row.tank_id)] = {
+            battles: Number(all.battles || 0),
+            wins: Number(all.wins || 0),
+            damage: Number(all.damage_dealt || 0)
+          };
+        }
+        done(null, result);
+      }
+    );
+  }
+
+  function takeSnapshot(done) {
+    var account = null;
+    var tanks = null;
+    var failed = false;
+
+    function finish() {
+      if (failed || !account || !tanks) return;
+      done(null, {
+        createdAt: new Date().getTime(),
+        account: account,
+        tanks: tanks
+      });
+    }
+
+    loadAccount(function (err, value) {
+      if (err) { failed = true; done(err, null); return; }
+      account = value;
+      finish();
+    });
+
+    loadTanks(function (err, value) {
+      if (err) { failed = true; done(err, null); return; }
+      tanks = value;
+      finish();
+    });
+  }
+
+  function loadBaseline() {
+    var raw;
+    try {
+      raw = localStorage.getItem(baselineKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveBaseline(snapshot) {
+    try {
+      localStorage.setItem(baselineKey, JSON.stringify(snapshot));
+      return true;
+    } catch (e) {
+      showError("localStorage error: " + e.message);
+      return false;
+    }
+  }
+
+  function diff(a, b) {
+    var n = Number(a || 0) - Number(b || 0);
+    return n < 0 ? 0 : n;
+  }
+
+  function sessionFrom(current, baseline) {
+    var summary = {
+      battles: diff(current.account.battles, baseline.account.battles),
+      wins: diff(current.account.wins, baseline.account.wins),
+      damage: diff(current.account.damage, baseline.account.damage)
+    };
+
+    var tanks = [];
+    var id, now, before, battles, wins, damage;
+
+    for (id in current.tanks) {
+      if (!current.tanks.hasOwnProperty(id)) continue;
+
+      now = current.tanks[id];
+      before = baseline.tanks[id] || { battles: 0, wins: 0, damage: 0 };
+      battles = diff(now.battles, before.battles);
+
+      if (battles <= 0) continue;
+
+      wins = diff(now.wins, before.wins);
+      damage = diff(now.damage, before.damage);
+
+      tanks.push({
+        tankId: id,
+        battles: battles,
+        wins: wins,
+        damage: damage,
+        winRate: (wins / battles) * 100,
+        avgDamage: damage / battles
+      });
+    }
+
+    tanks.sort(function (a, b) {
+      return b.battles - a.battles;
+    });
+
+    return { summary: summary, tanks: tanks };
+  }
+
+  function renderSummary(s) {
+    var battlesEl = document.getElementById("sessionBattles");
+    var wrEl = document.getElementById("sessionWinRate");
+    var avgEl = document.getElementById("sessionAvgDamage");
+    var wr, avg;
+
+    if (!battlesEl) return;
+
+    wr = s.battles ? (s.wins / s.battles) * 100 : 0;
+    avg = s.battles ? s.damage / s.battles : 0;
+
+    battlesEl.innerHTML = String(s.battles);
+    wrEl.innerHTML = wr.toFixed(2) + "%";
+    avgEl.innerHTML = String(Math.round(avg));
+  }
+
+  function loadNameCache() {
+    try {
+      return JSON.parse(localStorage.getItem(namesKey) || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveNameCache(cache) {
+    try {
+      localStorage.setItem(namesKey, JSON.stringify(cache));
+    } catch (e) {}
+  }
+
+  function loadNames(ids, done) {
+    var cache = loadNameCache();
+    var missing = [];
+    var i;
+
+    for (i = 0; i < ids.length; i++) {
+      if (!cache[ids[i]]) missing.push(ids[i]);
+    }
+
+    if (!missing.length) {
+      done(cache);
+      return;
+    }
+
+    requestJson(
+      apiUrl("/wotb/encyclopedia/vehicles/", {
+        tank_id: missing.join(","),
+        fields: "tank_id,name"
+      }),
+      function (err, json) {
+        var id, tank;
+        if (!err && json && json.data) {
+          for (id in json.data) {
+            if (!json.data.hasOwnProperty(id)) continue;
+            tank = json.data[id];
+            if (tank) cache[id] = tank.name || ("Tank " + id);
+          }
+          saveNameCache(cache);
+        }
+        done(cache);
+      }
+    );
+  }
+
+  function renderTanks(tanks, names) {
+    var list = document.getElementById("tankList");
+    var i, tank, row, nameEl, values, j, cell, strong, span;
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (!tanks.length) {
+      row = document.createElement("div");
+      row.className = "empty";
+      row.appendChild(document.createTextNode("Пока нет боёв после точки отсчёта."));
+      list.appendChild(row);
+      return;
+    }
+
+    for (i = 0; i < tanks.length; i++) {
+      tank = tanks[i];
+      row = document.createElement("div");
+      row.className = "tank";
+
+      nameEl = document.createElement("div");
+      nameEl.className = "tank-name";
+      nameEl.appendChild(document.createTextNode(names[tank.tankId] || ("tank_id " + tank.tankId)));
+      row.appendChild(nameEl);
+
+      values = [
+        [tank.battles, "BATTLES"],
+        [tank.winRate.toFixed(2) + "%", "WIN RATE"],
+        [Math.round(tank.avgDamage), "AVG DMG"]
+      ];
+
+      for (j = 0; j < values.length; j++) {
+        cell = document.createElement("div");
+        cell.className = "cell";
+
+        strong = document.createElement("strong");
+        strong.appendChild(document.createTextNode(String(values[j][0])));
+
+        span = document.createElement("span");
+        span.appendChild(document.createTextNode(values[j][1]));
+
+        cell.appendChild(strong);
+        cell.appendChild(span);
+        row.appendChild(cell);
+      }
+
+      list.appendChild(row);
+    }
+  }
+
+  function refresh() {
+    if (busy) return;
+    busy = true;
+    clearError();
+
+    takeSnapshot(function (err, current) {
+      var baseline, session, ids, i;
+
+      busy = false;
+
+      if (err) {
+        showError(err);
+        return;
+      }
+
+      baseline = loadBaseline();
+
+      if (!baseline) {
+        saveBaseline(current);
+        baseline = current;
+      }
+
+      session = sessionFrom(current, baseline);
+
+      if (uiMode === "summary") {
+        renderSummary(session.summary);
+      } else {
+        ids = [];
+        for (i = 0; i < session.tanks.length; i++) {
+          ids.push(session.tanks[i].tankId);
+        }
+
+        loadNames(ids, function (names) {
+          renderTanks(session.tanks, names);
+        });
+      }
+    });
+  }
+
+  var resetButton = document.getElementById("resetButton");
+  if (resetButton) {
+    resetButton.onclick = function () {
+      if (!window.confirm("Сбросить текущую сессию?")) return;
+
+      takeSnapshot(function (err, snap) {
+        if (err) {
+          showError(err);
+          return;
+        }
+        saveBaseline(snap);
+        refresh();
+      });
+    };
+  }
+
+  refresh();
+  window.setInterval(refresh, POLL_MS);
+
+  if (window.addEventListener) {
+    window.addEventListener("focus", refresh, false);
+    window.addEventListener("pageshow", refresh, false);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) refresh();
+    }, false);
+  }
+}());
+
+</script>
+</body>
+</html>
