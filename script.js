@@ -9,7 +9,7 @@
 */
 
 const DEFAULT_APPLICATION_ID = "153a89caee08c947220e21a5a91f13bb";
-const DEFAULT_ACCOUNT_ID = "599644675";
+const DEFAULT_ACCOUNT_ID = "573439188";
 const POLL_INTERVAL_MS = 15_000;
 
 const params = new URLSearchParams(location.search);
