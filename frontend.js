@@ -199,6 +199,7 @@
       if (xhr.readyState !== 4) return;
       var retryAfter = Number(xhr.getResponseHeader('Retry-After') || 0) * 1000;
       if (xhr.status < 200 || xhr.status >= 300) {
+        if (xhr.status === 0) { finish('Нет соединения · повторим позже', null, retryAfter); return; }
         var serverCode = '';
         try { serverCode = JSON.parse(xhr.responseText).error || ''; } catch (ignored) {}
         finish('Нет обновления · HTTP ' + xhr.status + (serverCode ? ' · ' + serverCode : ''), null, retryAfter);
@@ -243,7 +244,7 @@
       allTanks = data.session.tanks || [];
       renderTanks();
       if (element('nickname')) element('nickname').textContent = String(data.nickname || accountId) + ' · ' + String(data.realm || realm || 'eu').toUpperCase();
-      status(data.stale ? 'Ожидаем согласованные данные · сохранена последняя сводка' : (afterReset ? 'Сессия сброшена · ' : 'Обновлено ') + new Date(Number(data.snapshot_at || data.server_time || Date.now())).toLocaleTimeString(), Boolean(data.stale));
+      status(data.stale ? 'Данные синхронизируются · показываем последнюю сводку' : (afterReset ? 'Сессия сброшена · ' : 'Обновлено ') + new Date(Number(data.snapshot_at || data.server_time || Date.now())).toLocaleTimeString(), false);
       schedule(Math.min(300000, interval * Math.pow(2, failures)) + Math.floor(Math.random() * 1500));
     });
   }
