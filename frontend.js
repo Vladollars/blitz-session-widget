@@ -45,7 +45,7 @@
   var busy = false, timer = null, failures = 0, lastStarted = 0;
   var canReset = false;
   var interval = view === 'battle' ? 120000 : 30000;
-  var allTanks = [], page = 0, pageSize = 5;
+  var allTanks = [];
   var demo = parameter('demo') === '1';
 
   function setResetEnabled(enabled) {
@@ -96,12 +96,8 @@
     var list = element('tankList');
     if (!list) return;
     list.innerHTML = '';
-    if (view === 'sidebar') pageSize = Math.max(1, Math.floor((window.innerHeight - 154) / 78));
-    else pageSize = 6;
-    page = Math.min(page, Math.max(0, Math.ceil(allTanks.length / pageSize) - 1));
-    var from = page * pageSize;
     if (!allTanks.length) list.appendChild(cell('После начала сессии ещё нет боёв.', 'empty'));
-    for (var i = from; i < Math.min(from + pageSize, allTanks.length); i++) {
+    for (var i = 0; i < allTanks.length; i++) {
       var tank = allTanks[i], row = document.createElement('article'); row.className = 'tank';
       row.appendChild(cell(tank.name || 'Танк ' + tank.tank_id, 'tank-name'));
       var stats = document.createElement('div'); stats.className = 'tank-stats';
@@ -110,9 +106,6 @@
       stats.appendChild(cell(Math.round(tank.avg_damage) + ' урон'));
       row.appendChild(stats); list.appendChild(row);
     }
-    if (element('pageLabel')) element('pageLabel').textContent = (page + 1) + ' / ' + Math.max(1, Math.ceil(allTanks.length / pageSize));
-    if (element('previous')) element('previous').disabled = page === 0;
-    if (element('next')) element('next').disabled = from + pageSize >= allTanks.length;
   }
   function identityQuery() {
     return 'account_id=' + encodeURIComponent(accountId) + '&game_realm=' + encodeURIComponent(realm || 'eu') +
@@ -130,7 +123,11 @@
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       var retryAfter = Number(xhr.getResponseHeader('Retry-After') || 0) * 1000;
-      if (xhr.status < 200 || xhr.status >= 300) { finish('Нет обновления · HTTP ' + xhr.status, null, retryAfter); return; }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        var serverCode = '';
+        try { serverCode = JSON.parse(xhr.responseText).error || ''; } catch (ignored) {}
+        finish('Нет обновления · HTTP ' + xhr.status + (serverCode ? ' · ' + serverCode : ''), null, retryAfter); return;
+      }
       var data;
       try { data = JSON.parse(xhr.responseText); } catch (ignored) { finish('Некорректный ответ сервера'); return; }
       if (!data || data.status !== 'ok' || !data.session) { finish('Статистика временно недоступна'); return; }
@@ -174,8 +171,6 @@
   }
   if (element('resetButton')) element('resetButton').onclick = function () { refresh(true); };
   if (element('hangarResetButton')) element('hangarResetButton').onclick = function () { refresh(true); };
-  if (element('previous')) element('previous').onclick = function () { page--; renderTanks(); };
-  if (element('next')) element('next').onclick = function () { page++; renderTanks(); };
   if (element('accountForm')) {
     element('accountInput').value = accountId || '';
     element('realmInput').value = realm || 'eu';

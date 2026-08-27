@@ -64,10 +64,10 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
 .hangar .summary, .battle .summary { height: 100%; background: rgba(10,17,25,.52); border-radius: 5px; }
 .hangar .summary { width: calc(100% - 42px); }
 .hangar .stat + .stat, .battle .stat + .stat { border-left: 1px solid rgba(255,255,255,.10); }
-.hangar .stat { padding: 0 8px; flex-direction: row-reverse; }
+.hangar .stat { padding: 0 8px; flex-direction: row; }
 .hangar .stat strong { font-size: 21px; max-width: calc(100% - 24px); }
 .hangar .icon { flex-shrink: 0; width: 17px; height: 17px; margin: 0 0 0 7px; }
-.battle .stat { padding: 0 8px; flex-direction: row-reverse; }
+.battle .stat { padding: 0 8px; flex-direction: row; }
 .battle .stat strong { font-size: 14px; max-width: calc(100% - 20px); }
 .battle .icon { flex-shrink: 0; width: 13px; height: 13px; margin: 0 0 0 7px; }
 .hangar .status, .battle .status { display: none; }
@@ -83,7 +83,7 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
 .sidebar .tank-name { font-size: 12px; }
 .sidebar .tank-stats { font-size: 11px; }
 .sidebar .status { margin-top: 8px; font-size: 10px; line-height: 13px; }
-.sidebar .pager { margin-top: 8px; }
+.sidebar .tank-list { height: calc(100vh - 62px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; } .sidebar .tank-list::-webkit-scrollbar { width: 5px; } .sidebar .tank-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 5px; }
 .coming { margin: 0; background: transparent; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .coming main { max-width: 460px; }
 .coming h1 { font-size: 34px; }

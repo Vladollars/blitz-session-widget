@@ -3,7 +3,7 @@ WEB v0.2
 Публикуйте только содержимое web/ в GitHub Pages.
 index.html — полный браузерный вид.
 summary.html?view=hangar — 328x48; ?view=battle — 374x24.
-tanks.html?view=sidebar — ширина 348, пагинация.
+tanks.html?view=sidebar — ширина 348, вертикальная прокрутка списка.
 coming-soon.html — статичная заглушка без API.
 config.js содержит только публичный адрес Worker.
 
