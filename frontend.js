@@ -1,20 +1,207 @@
-(function(){
-var P=10000;
-function q(n){var a=location.search.substring(1).split("&"),i,p;for(i=0;i<a.length;i++){p=a[i].split("=");if(decodeURIComponent(p[0]||"")===n)return decodeURIComponent((p.slice(1).join("=")||"").replace(/\+/g," "))}return null}
-function platform(){var u=String(navigator.userAgent||""),p=String(navigator.platform||"");if(/Android/i.test(u))return"android";if(/iPhone|iPad|iPod/i.test(u)||(p==="MacIntel"&&Number(navigator.maxTouchPoints||0)>1))return"ios";if(/Windows/i.test(u)||/^Win/i.test(p))return"windows";if(/Macintosh|Mac OS X/i.test(u)||/^Mac/i.test(p))return"macos";if(/Linux/i.test(u)||/Linux/i.test(p))return"linux";return"unknown"}
-var qa=q("account_id"),qr=q("realm")||q("game_realm"),src=q("source")||"unknown",mv=q("mod_version")||"unknown",dist=q("distribution")||"unknown";
-try{if(qa)localStorage.setItem("blitz-session-account-id",qa);if(qr)localStorage.setItem("blitz-session-game-realm",qr);if(src)localStorage.setItem("blitz-session-source",src);if(mv)localStorage.setItem("blitz-session-mod-version",mv);if(dist)localStorage.setItem("blitz-session-distribution",dist)}catch(e){}
-var id=qa,gr=qr;
-try{if(!id)id=localStorage.getItem("blitz-session-account-id");if(!gr)gr=localStorage.getItem("blitz-session-game-realm");if(src==="unknown")src=localStorage.getItem("blitz-session-source")||src;if(mv==="unknown")mv=localStorage.getItem("blitz-session-mod-version")||mv;if(dist==="unknown")dist=localStorage.getItem("blitz-session-distribution")||dist}catch(e){}
-var pf=platform(),api=String(window.BLITZ_SESSION_API||"").replace(/\/+$/,"");var er=document.getElementById("errorLine"),busy=false;
-function show(m){if(er){er.textContent=m;er.className="error-line visible"}}
-function clear(){if(er){er.textContent="";er.className="error-line"}}
-function ready(){if(!api){show("BACKEND URL NOT SET");return false}if(!id){show("WAITING FOR ACCOUNT ID FROM HANGAR");return false}return true}
-function ident(){var s="account_id="+encodeURIComponent(id);if(gr)s+="&game_realm="+encodeURIComponent(gr);s+="&source="+encodeURIComponent(src)+"&platform="+encodeURIComponent(pf)+"&distribution="+encodeURIComponent(dist)+"&mod_version="+encodeURIComponent(mv);return s}
-function req(method,path,cb){if(!ready()){cb("not ready");return}var x=new XMLHttpRequest();x.onreadystatechange=function(){var d;if(x.readyState!==4)return;if(x.status<200||x.status>=300){cb("Backend HTTP "+x.status+(x.responseText?": "+x.responseText:""));return}try{d=JSON.parse(x.responseText)}catch(e){cb("Backend JSON parse error");return}if(!d||d.status!=="ok"){cb(d&&d.error?d.error:"Backend error");return}cb(null,d)};x.onerror=function(){cb("Backend network error")};var sep=path.indexOf("?")>=0?"&":"?";x.open(method,api+path+sep+"_ts="+Date.now(),true);x.send(null)}
-function sum(s){var b=document.getElementById("sessionBattles"),w=document.getElementById("sessionWinRate"),a=document.getElementById("sessionAvgDamage");if(!b)return;b.textContent=String(s.battles||0);w.textContent=Number(s.win_rate||0).toFixed(2)+"%";a.textContent=String(Math.round(Number(s.avg_damage||0)))}
-function tanks(ts){var l=document.getElementById("tankList"),i,t,r,n,v,j,c,st,sp;if(!l)return;l.innerHTML="";if(!ts||!ts.length){r=document.createElement("div");r.className="empty";r.textContent="Пока нет боёв после точки отсчёта.";l.appendChild(r);return}for(i=0;i<ts.length;i++){t=ts[i];r=document.createElement("div");r.className="tank";n=document.createElement("div");n.className="tank-name";n.textContent=t.name||("tank_id "+t.tank_id);r.appendChild(n);v=[[t.battles,"BATTLES"],[Number(t.win_rate||0).toFixed(2)+"%","WIN RATE"],[Math.round(Number(t.avg_damage||0)),"AVG DMG"]];for(j=0;j<v.length;j++){c=document.createElement("div");c.className="cell";st=document.createElement("strong");st.textContent=String(v[j][0]);sp=document.createElement("span");sp.textContent=v[j][1];c.appendChild(st);c.appendChild(sp);r.appendChild(c)}l.appendChild(r)}}
-function refresh(){if(busy||!ready())return;busy=true;clear();req("GET","/session?"+ident(),function(e,d){busy=false;if(e){show(e);return}sum(d.session||{});tanks(d.session&&d.session.tanks||[])})}
-var rb=document.getElementById("resetButton");if(rb)rb.onclick=function(){if(!ready()||!confirm("Сбросить текущую сессию?"))return;clear();req("POST","/reset?"+ident(),function(e){if(e){show(e);return}refresh()})};
-refresh();setInterval(refresh,P);if(window.addEventListener){window.addEventListener("focus",refresh,false);window.addEventListener("pageshow",refresh,false);document.addEventListener("visibilitychange",function(){if(!document.hidden)refresh()},false)}
+(function () {
+  'use strict';
+  function parameter(name) {
+    var entries = location.search.substring(1).split('&');
+    for (var i = 0; i < entries.length; i++) {
+      var pair = entries[i].split('=');
+      try {
+        if (decodeURIComponent(pair[0]) === name) return decodeURIComponent(pair.slice(1).join('=').replace(/\+/g, ' '));
+      } catch (ignored) { return null; }
+    }
+    return null;
+  }
+  function element(id) { return document.getElementById(id); }
+  function stored(key, value) {
+    try {
+      if (value !== undefined) localStorage.setItem(key, value);
+      return localStorage.getItem(key);
+    } catch (ignored) { return null; }
+  }
+  function platform() {
+    var agent = navigator.userAgent || '';
+    if (/Android/i.test(agent)) return 'android';
+    if (/iPhone|iPad|iPod/i.test(agent)) return 'ios';
+    if (/Windows/i.test(agent)) return 'windows';
+    if (/Macintosh/i.test(agent)) return 'macos';
+    if (/Linux/i.test(agent)) return 'linux';
+    return 'unknown';
+  }
+  var view = parameter('view') || (location.pathname.indexOf('tanks.html') >= 0 ? 'sidebar' : 'browser');
+  if (!/^(hangar|battle|sidebar|browser)$/.test(view)) view = 'browser';
+  document.body.className = view;
+  var accountId = parameter('account_id');
+  var realm = parameter('game_realm') || parameter('realm');
+  // Explicit URL identity always wins. Storage is only a fallback, never proof of shared WebViews.
+  if (accountId) {
+    realm = realm || 'eu';
+    stored('blitz-session-identity-v2', JSON.stringify({id: accountId, realm: realm}));
+  } else {
+    try {
+      var saved = JSON.parse(stored('blitz-session-identity-v2') || 'null');
+      if (saved) { accountId = saved.id; realm = saved.realm; }
+    } catch (ignored) {}
+  }
+  var api = String(window.BLITZ_SESSION_API || '').replace(/\/+$/, '');
+  var busy = false, timer = null, failures = 0, lastStarted = 0;
+  var canReset = false;
+  var interval = view === 'battle' ? 120000 : 30000;
+  var allTanks = [], page = 0, pageSize = 5;
+  var demo = parameter('demo') === '1';
+
+  function setResetEnabled(enabled) {
+    var ids = ['resetButton', 'hangarResetButton'];
+    for (var i = 0; i < ids.length; i++) {
+      if (element(ids[i])) element(ids[i]).disabled = !enabled;
+    }
+  }
+
+  function rateClass(rate, battles) {
+    if (!battles) return 'rate-neutral';
+    if (rate < 30) return 'rate-red';
+    if (rate < 50) return 'rate-white';
+    if (rate < 60) return 'rate-green';
+    if (rate < 70) return 'rate-blue';
+    return 'rate-purple';
+  }
+  function status(message, warning) {
+    var line = element('errorLine');
+    if (line) { line.textContent = message; line.className = warning ? 'status warning' : 'status'; }
+    // Compact widgets never grow or display error prose over game controls.
+    document.body.title = message;
+    var summary = element('summary');
+    if (summary) summary.setAttribute('data-stale', warning ? 'true' : 'false');
+  }
+  function renderSummary(session) {
+    if (!element('sessionBattles')) return;
+    element('sessionBattles').textContent = String(session.battles);
+    element('sessionWinRate').textContent = session.battles ? Number(session.win_rate).toFixed(1) + '%' : '—';
+    element('sessionWinRate').className = rateClass(session.win_rate, session.battles);
+    element('sessionAvgDamage').textContent = String(Math.round(session.avg_damage));
+    // Large counters scale down instead of colliding with neighbouring cells.
+    var values = [element('sessionBattles'), element('sessionWinRate'), element('sessionAvgDamage')];
+    for (var i = 0; i < values.length; i++) {
+      values[i].style.fontSize = '';
+      var size = parseFloat(window.getComputedStyle(values[i]).fontSize);
+      while (values[i].scrollWidth > values[i].clientWidth && size > 10) values[i].style.fontSize = (--size) + 'px';
+    }
+  }
+  function cell(text, className) {
+    var node = document.createElement('span'); node.className = className || ''; node.textContent = text; return node;
+  }
+  function battleLabel(count) {
+    var lastTwo = count % 100, last = count % 10;
+    return count + ' ' + (lastTwo >= 11 && lastTwo <= 14 ? 'боёв' : last === 1 ? 'бой' : last >= 2 && last <= 4 ? 'боя' : 'боёв');
+  }
+  function renderTanks() {
+    var list = element('tankList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (view === 'sidebar') pageSize = Math.max(1, Math.floor((window.innerHeight - 154) / 78));
+    else pageSize = 6;
+    page = Math.min(page, Math.max(0, Math.ceil(allTanks.length / pageSize) - 1));
+    var from = page * pageSize;
+    if (!allTanks.length) list.appendChild(cell('После начала сессии ещё нет боёв.', 'empty'));
+    for (var i = from; i < Math.min(from + pageSize, allTanks.length); i++) {
+      var tank = allTanks[i], row = document.createElement('article'); row.className = 'tank';
+      row.appendChild(cell(tank.name || 'Танк ' + tank.tank_id, 'tank-name'));
+      var stats = document.createElement('div'); stats.className = 'tank-stats';
+      stats.appendChild(cell(battleLabel(tank.battles)));
+      stats.appendChild(cell(Number(tank.win_rate).toFixed(1) + '%', rateClass(tank.win_rate, tank.battles)));
+      stats.appendChild(cell(Math.round(tank.avg_damage) + ' урон'));
+      row.appendChild(stats); list.appendChild(row);
+    }
+    if (element('pageLabel')) element('pageLabel').textContent = (page + 1) + ' / ' + Math.max(1, Math.ceil(allTanks.length / pageSize));
+    if (element('previous')) element('previous').disabled = page === 0;
+    if (element('next')) element('next').disabled = from + pageSize >= allTanks.length;
+  }
+  function identityQuery() {
+    return 'account_id=' + encodeURIComponent(accountId) + '&game_realm=' + encodeURIComponent(realm || 'eu') +
+      '&source=' + encodeURIComponent(parameter('source') || 'browser') + '&platform=' + platform() +
+      '&mod_version=0.2&distribution=' + encodeURIComponent(parameter('distribution') || 'unknown');
+  }
+  function request(callback, reset) {
+    var xhr = new XMLHttpRequest(), finished = false;
+    function finish(error, data, retryAfter) {
+      if (finished) return;
+      finished = true; callback(error, data, retryAfter || 0);
+    }
+    xhr.open(reset ? 'POST' : 'GET', api + (reset ? '/reset?' : '/session?') + identityQuery(), true);
+    xhr.timeout = 25000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var retryAfter = Number(xhr.getResponseHeader('Retry-After') || 0) * 1000;
+      if (xhr.status < 200 || xhr.status >= 300) { finish('Нет обновления · HTTP ' + xhr.status, null, retryAfter); return; }
+      var data;
+      try { data = JSON.parse(xhr.responseText); } catch (ignored) { finish('Некорректный ответ сервера'); return; }
+      if (!data || data.status !== 'ok' || !data.session) { finish('Статистика временно недоступна'); return; }
+      finish(null, data, retryAfter);
+    };
+    xhr.onerror = function () { finish('Нет соединения · повторим позже'); };
+    xhr.ontimeout = function () { finish('Сервер не ответил · повторим позже'); };
+    xhr.send(null);
+  }
+  function schedule(delay) {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, delay);
+  }
+  function refresh(reset) {
+    if (demo || busy || (reset && !canReset)) return;
+    if (!accountId || !/^[1-9]\d{0,11}(?:\.0+)?$/.test(accountId) || !api) {
+      status('Укажите ID аккаунта и регион. Для HUD доступна персональная сборка.', true); return;
+    }
+    if (document.hidden) { schedule(interval); return; }
+    if (reset && !window.confirm('Сбросить общую сессию аккаунта на всех устройствах? История изменений сохранится.')) return;
+    clearTimeout(timer);
+    busy = true; lastStarted = Date.now();
+    setResetEnabled(false);
+    request(function (error, data, retryAfter) {
+      busy = false;
+      if (error) {
+        canReset = false;
+        failures++; status(reset ? 'Сброс не подтверждён · проверим сессию позже' : error, true);
+        // A timed-out POST may have committed. Retry only GET, never reset automatically.
+        schedule(Math.max(retryAfter, Math.min(300000, interval * Math.pow(2, Math.min(failures, 4)))) + Math.floor(Math.random() * 1500));
+        return;
+      }
+      failures = data.stale ? Math.min(failures + 1, 3) : 0;
+      canReset = view !== 'battle' && !data.stale && data.reset_available === true;
+      setResetEnabled(canReset);
+      renderSummary(data.session); allTanks = data.session.tanks || []; renderTanks();
+      if (element('nickname')) element('nickname').textContent = data.nickname + ' · ' + String(data.realm).toUpperCase();
+      status(data.stale ? 'Ожидаем согласованные данные · сохранена последняя сводка' : (reset ? 'Сессия сброшена · ' : 'Обновлено ') + new Date(data.snapshot_at || data.server_time).toLocaleTimeString(), Boolean(data.stale));
+      schedule(Math.min(300000, interval * Math.pow(2, failures)) + Math.floor(Math.random() * 1500));
+    }, reset);
+  }
+  if (element('resetButton')) element('resetButton').onclick = function () { refresh(true); };
+  if (element('hangarResetButton')) element('hangarResetButton').onclick = function () { refresh(true); };
+  if (element('previous')) element('previous').onclick = function () { page--; renderTanks(); };
+  if (element('next')) element('next').onclick = function () { page++; renderTanks(); };
+  if (element('accountForm')) {
+    element('accountInput').value = accountId || '';
+    element('realmInput').value = realm || 'eu';
+    element('accountForm').onsubmit = function (event) {
+      event.preventDefault();
+      location.href = 'index.html?account_id=' + encodeURIComponent(element('accountInput').value.trim()) + '&game_realm=' + encodeURIComponent(element('realmInput').value);
+    };
+  }
+  if (demo) {
+    var sample = { battles: 19, win_rate: 63.1579, avg_damage: 2486, tanks: [] };
+    var names = ['Super Conqueror', 'Pz.Kpfw. VI Ausf. B (H) Tiger II', 'AMX 50 B', 'Танк с длинным названием для проверки', 'T110E5', 'Leopard 1', 'Object 268'];
+    for (var n = 0; n < names.length; n++) sample.tanks.push({ tank_id: n + 1, name: names[n], battles: n + 1, win_rate: [25, 45, 55, 65, 75, 50, 100][n], avg_damage: 2486 });
+    var scenario = parameter('scenario');
+    if (scenario === 'empty') sample = { battles: 0, win_rate: 0, avg_damage: 0, tanks: [] };
+    if (scenario === 'large') { sample.battles = 1234567; sample.win_rate = 100; sample.avg_damage = 12345678; }
+    renderSummary(sample); allTanks = sample.tanks; renderTanks();
+    if (element('nickname')) element('nickname').textContent = 'Демонстрация · EU';
+    status(scenario === 'offline' ? 'Нет соединения · сохранена последняя сводка' : 'Демонстрационные данные · запросы отключены', scenario === 'offline');
+  } else refresh();
+  if (window.addEventListener) {
+    window.addEventListener('resize', renderTanks, false);
+    function resume() {
+      if (!document.hidden && !failures && Date.now() - lastStarted > (view === 'battle' ? interval : 20000)) { clearTimeout(timer); refresh(); }
+    }
+    window.addEventListener('focus', resume, false);
+    window.addEventListener('pageshow', resume, false);
+    document.addEventListener('visibilitychange', resume, false);
+  }
 })();

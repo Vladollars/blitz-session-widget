@@ -1,25 +1,13 @@
-WEB v0.1.1 OBSERVABILITY
+WEB v0.2
 
-Upload to the GitHub Pages repository root:
-- index.html
-- summary.html
-- tanks.html
-- style.css
-- config.js
-- frontend.js
-- admin.html   (new)
+Публикуйте только содержимое web/ в GitHub Pages.
+index.html — полный браузерный вид.
+summary.html?view=hangar — 328x48; ?view=battle — 374x24.
+tanks.html?view=sidebar — ширина 348, пагинация.
+coming-soon.html — статичная заглушка без API.
+config.js содержит только публичный адрес Worker.
 
-Platform detection:
-- automatic from the WebView/browser environment
-- values: windows / android / ios / macos / linux / unknown
-
-IMPORTANT:
-Steam vs WGC vs Microsoft Store is NOT guessed.
-The same Windows DAVA WebView does not reliably expose which launcher/store started Blitz.
-For now distribution is recorded as "unknown".
-This is intentional rather than collecting made-up data.
-
-Admin page:
-https://vladollars.github.io/blitz-session-widget/admin.html
-It asks for ADMIN_TOKEN and sends it only in the Authorization header.
-The token is kept in sessionStorage, not committed to GitHub.
+Из корня проекта: npm run serve
+http://127.0.0.1:4173/?demo=1 — вымышленные данные без запросов.
+http://127.0.0.1:4173/__qa.html — точные игровые размеры.
+Подробности: ../docs/DEPLOY.md, ../docs/VERIFICATION.md.
