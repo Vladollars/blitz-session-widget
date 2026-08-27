@@ -77,12 +77,12 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
 .sidebar #summary { display: none; }
 .sidebar .workspace { display: block; }
 .sidebar .future { display: none; }
-.sidebar .section-heading { margin: 2px 0 12px; }
-.sidebar h2 { font-size: 15px; }
-.sidebar .tank { padding: 9px 10px; min-height: 74px; margin-bottom: 4px; border-radius: 6px; }
-.sidebar .tank-name { font-size: 12px; }
-.sidebar .tank-stats { font-size: 11px; }
-.sidebar .status { margin-top: 8px; font-size: 10px; line-height: 13px; }
+.sidebar .section-heading { margin: 0; }
+.sidebar h2 { display: none; }
+.sidebar .tank { padding: 7px 10px; min-height: 56px; margin-bottom: 3px; border-radius: 5px; }
+.sidebar .tank-name { font-size: 13px; line-height: 16px; }
+.sidebar .tank-stats { margin-top: 5px; font-size: 12px; }
+.sidebar .status { margin: 0 0 8px; color: #bcc7d4; font-size: 12px; line-height: 15px; }
 .sidebar .tank-list { height: calc(100vh - 62px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; } .sidebar .tank-list::-webkit-scrollbar { width: 5px; } .sidebar .tank-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 5px; }
 .coming { margin: 0; background: transparent; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .coming main { max-width: 460px; }
