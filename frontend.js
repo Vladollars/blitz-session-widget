@@ -42,6 +42,17 @@
   var accountId = parameter('account_id');
   var realm = parameter('game_realm') || parameter('realm');
 
+  function normalizeRealm(value) {
+    var raw = String(value || '').toLowerCase().replace(/^realm[._:-]?/, '');
+    if (raw === 'na' || raw === 'us' || raw === 'usa' || raw.indexOf('na') >= 0) return 'na';
+    if (raw === 'asia' || raw === 'as' || raw.indexOf('asia') >= 0) return 'asia';
+    if (raw === 'eu' || raw === 'europe' || raw.indexOf('eu') >= 0) return 'eu';
+    // The old backend autodiscovered an unrecognised DAVA realm. Keep EU as
+    // the safe compatibility default instead of sending an invalid API realm.
+    return raw ? 'eu' : null;
+  }
+  realm = normalizeRealm(realm);
+
   /* Keep both the new combined key and the old proven keys. Some Blitz WebViews
      are quirky about storage sharing, so the explicit URL always wins. */
   if (accountId) {
@@ -258,7 +269,7 @@
         schedule(interval);
         return;
       }
-      request('POST', '/reset?', function (error) {
+      request('POST', '/reset?', function (error, data) {
         if (error) {
           busy = false;
           canReset = false;
@@ -268,8 +279,18 @@
           schedule(Math.min(300000, interval * Math.pow(2, Math.min(failures, 4))));
           return;
         }
-        /* v0.1.1 reset response intentionally has no session object. Fetch it now. */
-        loadSession(true);
+        /* v0.2 returns the fresh zero session; keep compatibility with v0.1.1 responses. */
+        if (data && data.session) {
+          busy = false;
+          failures = 0;
+          canReset = view !== 'battle' && data.reset_available !== false;
+          setResetEnabled(canReset);
+          renderSummary(data.session);
+          allTanks = data.session.tanks || [];
+          renderTanks();
+          status('Сессия сброшена · ' + new Date(Number(data.server_time || Date.now())).toLocaleTimeString(), false);
+          schedule(interval);
+        } else loadSession(true);
       });
       return;
     }
