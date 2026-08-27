@@ -67,8 +67,9 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
 .hangar .stat { padding: 0 8px; flex-direction: row; }
 .hangar .stat strong { font-size: 21px; max-width: calc(100% - 24px); }
 .hangar .icon { flex-shrink: 0; width: 17px; height: 17px; margin: 0 0 0 7px; }
-.battle .stat { padding: 0 8px; flex-direction: row; }
-.battle .stat strong { font-size: 14px; max-width: calc(100% - 20px); }
+.battle .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 30px; }
+.battle .stat { width: auto; min-width: 0; height: 30px; padding: 0 5px; flex-direction: row; align-items: center; justify-content: center; }
+.battle .stat strong { display: flex; align-items: center; height: 20px; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; line-height: 20px; letter-spacing: 0; max-width: calc(100% - 20px); }
 .battle .icon { flex-shrink: 0; width: 13px; height: 13px; margin: 0 0 0 7px; }
 .hangar .status, .battle .status { display: none; }
 .summary[data-stale=true] { opacity: .65; }
@@ -80,9 +81,9 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
 .sidebar .section-heading { margin: 0; }
 .sidebar h2 { display: none; }
 .sidebar .tank { padding: 7px 10px; min-height: 56px; margin-bottom: 3px; border-radius: 5px; }
-.sidebar .tank-name { font-size: 13px; line-height: 16px; }
-.sidebar .tank-stats { margin-top: 5px; font-size: 12px; }
-.sidebar .status { margin: 0 0 8px; color: #bcc7d4; font-size: 12px; line-height: 15px; }
+.sidebar .tank-name { font-size: 16px; line-height: 18px; }
+.sidebar .tank-stats { margin-top: 5px; font-size: 14px; line-height: 17px; }
+.sidebar .status { margin: 0 0 8px; color: #d0d8e2; font-size: 14px; line-height: 17px; }
 .sidebar .tank-list { height: calc(100vh - 62px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; } .sidebar .tank-list::-webkit-scrollbar { width: 5px; } .sidebar .tank-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 5px; }
 .coming { margin: 0; background: transparent; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .coming main { max-width: 460px; }
