@@ -82,7 +82,7 @@
   var failures = 0;
   var lastStarted = 0;
   var canReset = false;
-  var interval = view === 'battle' ? 120000 : 30000;
+  var interval = view === 'battle' ? 30000 : 30000;
   var allTanks = [];
   var demo = parameter('demo') === '1';
 
