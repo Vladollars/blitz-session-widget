@@ -100,3 +100,16 @@ footer { margin-top: 30px; border-top: 1px solid #283441; padding-top: 18px; col
   .browser .stat .label { margin-left: 0; font-size: 8px; }
   .browser .stat .icon { width: 14px; margin-right: 5px; }
 }
+.chart-card { margin-top: 22px; padding: 15px; text-align: left; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(17,26,36,.72); }
+.chart-title, .chart-legend { display: flex; justify-content: space-between; align-items: center; color: #eef2f6; font-size: 11px; }
+.chart-title span, .chart-legend { color: #9daaba; font-size: 10px; }
+.chart { display: block; width: 100%; height: 92px; margin-top: 12px; overflow: visible; }
+.chart-grid { fill: none; stroke: rgba(255,255,255,.10); stroke-width: 1; }
+.chart-line { fill: none; stroke: #ce97ff; stroke-width: 3; stroke-linecap: round; }
+.chart circle { fill: #eab776; }
+.chart-legend { margin-top: 8px; }
+.coming-stats { display: flex; gap: 8px; margin-top: 10px; }
+.coming-stats div { flex: 1; padding: 9px 7px; border-radius: 7px; background: rgba(22,30,40,.68); }
+.coming-stats strong, .coming-stats span { display: block; }
+.coming-stats strong { font-size: 12px; }
+.coming-stats span { margin-top: 3px; color: #9daaba; font-size: 10px; }
