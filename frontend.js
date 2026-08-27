@@ -76,7 +76,9 @@
   var demo = parameter('demo') === '1';
 
   function validIdentity() {
-    return Boolean(accountId && /^[1-9]\d{0,11}(?:\.0+)?$/.test(accountId) && api);
+    // Let the Worker normalize Blitz/DAVA account_id formatting.
+    // The proven v0.1.1 frontend only required a non-empty id.
+    return Boolean(accountId && api);
   }
 
   function setResetEnabled(enabled) {
